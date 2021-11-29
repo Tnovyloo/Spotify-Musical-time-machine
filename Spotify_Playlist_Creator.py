@@ -3,12 +3,13 @@ from calendar import monthrange
 from bs4 import BeautifulSoup
 import requests
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyOAuth
 
 class Spotify_Playlist_Creator:
     def __init__(self, URL=str):
         self.URL = URL
         self.top100 = []
+        self.userinput : str
 
     def __str__(self):
         return self.URL
@@ -39,8 +40,9 @@ class Spotify_Playlist_Creator:
 
             #Returning the right URL to work with it
             self.URL = f"https://www.billboard.com/charts/hot-100/{UserInput[0]}-{UserInput[1]}-{UserInput[2]}/"
+            self.userinput = UserInput
             # print(f"Link to work: {self.URL}")
-            return self.URL
+            return self.URL, self.userinput
 
     def Importing_Data_From_URL(self, URL, top100):
         # self.song_name : str
@@ -70,16 +72,41 @@ class Spotify_Playlist_Creator:
         # print(top100, "\n", len(top100))
 
     def Connecting_With_Spotify(self):
-        #TODO Connecting with Spotify API to create a Playlist with title values (top100 variable)
+        global songs_uri
 
-        CLIENTID = "5048455b249843b1a3949af560d29f3a"
-        CLIENTSECRET = "133760dbb7704ab2ab35fcef5e13636f"
+        CLIENT_ID = "5048455b249843b1a3949af560d29f3a"
+        CLIENT_SECRET = "133760dbb7704ab2ab35fcef5e13636f"
+        REDIRECT_URI = "http://localhost:8888/callback/"
+        songs_uri = []
 
-        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=CLIENTID,
-                                                                   client_secret=CLIENTSECRET))
+        sp = spotipy.Spotify(
+            auth_manager=SpotifyOAuth(
+                scope="playlist-modify-private",
+                redirect_uri=REDIRECT_URI,
+                client_id = CLIENT_ID,
+                client_secret = CLIENT_SECRET,
+                show_dialog=True,
+                cache_path="token.txt"))
 
-        # results = sp.search(q='weezer', limit=20)
-        # for idx, track in enumerate(results['tracks']['items']):
-        #     print(idx, track['name'])
+        current_user = sp.current_user()["id"]
+        print(current_user)
+
+
+        for song in self.top100:
+            result = sp.search(q=f"track:{song} year:{self.userinput[0]}",type="track")
+
+            try:
+                uri = result["tracks"]["items"][0]["uri"]
+                songs_uri.append(uri)
+
+                #Print results of finding music on spotify
+                # print(f"{result}")
+
+            except IndexError:
+                print(f"{song} doesn't exist in Spotify. Skipped.")
+
+
+        playlist = sp.user_playlist_create(user=current_user, name=f"{self.userinput[0]}-{self.userinput[1]}-{self.userinput[2]} Billboard 100", public=False)
+        sp.playlist_add_items(playlist_id=playlist["id"], items=songs_uri)
 
 
