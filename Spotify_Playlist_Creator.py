@@ -74,9 +74,9 @@ class Spotify_Playlist_Creator:
     def Connecting_With_Spotify(self):
         global songs_uri
 
-        CLIENT_ID = "5048455b249843b1a3949af560d29f3a"
-        CLIENT_SECRET = "133760dbb7704ab2ab35fcef5e13636f"
-        REDIRECT_URI = "http://localhost:8888/callback/"
+        CLIENT_ID = "Your client ID"
+        CLIENT_SECRET = "Your client Secret"
+        REDIRECT_URI = "Your http://localhost:1234/callback/"
         songs_uri = []
 
         sp = spotipy.Spotify(
